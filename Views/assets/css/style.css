@@ -282,6 +282,9 @@ img { display: block; max-width: 100%; height: auto; }
 .user-table :is(th, td) { overflow-wrap: anywhere; }
 .user-table tbody th { white-space: normal; }
 .table-actions { display: flex; gap: 13px; flex-wrap: wrap; }
+.table-actions form { display: inline-flex; }
+.table-actions button.text-action { border: 0; padding: 0; background: transparent; font: inherit; cursor: pointer; }
+.account-metrics { margin-bottom: clamp(16px, 1.6vw, 27px); }
 .text-action { display: inline-flex; align-items: center; gap: 5px; color: #2b4d76; font-weight: 650; text-decoration: none; }
 .text-action:hover { text-decoration: underline; }
 .text-action .icon { width: 18px; height: 18px; }
@@ -320,6 +323,7 @@ img { display: block; max-width: 100%; height: auto; }
 .form-grid :is(input:not([type="hidden"]), select) { width: 100%; min-height: 43px; padding: 9px 12px; border: 1px solid #d8cbd8; border-radius: 8px; background: #fff; color: var(--navy); }
 .form-grid input[readonly] { background: #f5f3f7; }
 .form-grid .button-row, .form-grid > .button { margin-top: 10px; }
+.form-grid > .password-forgot-button { justify-self: start; margin-top: 0; padding: 7px 12px; font-size: .92rem; }
 .form-card .form-footer { margin: 17px 0 0; text-align: center; }
 .form-footer a { color: var(--pink-dark); font-weight: 700; }
 .hint { color: var(--muted); font-size: .88rem; }

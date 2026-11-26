@@ -10,12 +10,26 @@ Répit Santé est un projet étudiant qui vise à coordonner les examens et les 
 
 1. Place le dossier `projetweb` dans `C:\xampp\htdocs\`. Si tu as déjà créé ce dossier, copie les fichiers de l’archive à l’intérieur. Vérifie que `index.php` se trouve directement dans `C:\xampp\htdocs\projetweb\`.
 2. Dans le panneau XAMPP, démarre **Apache** et **MySQL**.
-3. Ouvre [phpMyAdmin](http://localhost/phpmyadmin/). Clique sur **Importer**, sélectionne `SQL/repit_sante.sql`, puis clique sur **Importer** ou **Exécuter** au bas de la page. Le script crée la base `repit_sante`, la table `users` et les tables de messagerie, avec les champs facultatifs de profil.
+3. Ouvre [phpMyAdmin](http://localhost/phpmyadmin/). Clique sur **Importer**, sélectionne `SQL/repit_sante.sql`, puis clique sur **Importer** ou **Exécuter** au bas de la page. Le script crée la base `repit_sante`, les tables de messagerie et de réinitialisation, ainsi que les champs facultatifs de profil et de blocage.
 4. Ouvre [Répit Santé](http://localhost/projetweb/) et clique sur **Créer un compte**.
 
 L’application utilise PHP 8.1+ et l’extension PDO MySQL. La connexion locale par défaut utilise `127.0.0.1:3306`, l’utilisateur `root` et le mot de passe MySQL vide de XAMPP. Si ta configuration diffère, renseigne les variables `REPIT_DB_HOST`, `REPIT_DB_PORT`, `REPIT_DB_NAME`, `REPIT_DB_USER` et `REPIT_DB_PASSWORD` selon tes paramètres. Pour un test avec un XAMPP personnalisé, tu peux aussi ajuster les valeurs locales dans `config/database.php`.
 
-Si la base et la table `users` existent déjà, importe `SQL/messaging_migration.sql` et `SQL/profile_migration.sql` depuis phpMyAdmin. Ces migrations ajoutent les tables de messagerie et les champs téléphone/photo sans supprimer les comptes ni leurs données existantes; elles peuvent être réexécutées.
+Si la base et la table `users` existent déjà, importe `SQL/messaging_migration.sql` puis `SQL/security_migration.sql` depuis phpMyAdmin. La migration de sécurité ajoute les colonnes manquantes (téléphone, photo et statut bloqué) et les tables de réinitialisation sans supprimer les comptes ni leurs données existantes; elle peut être réexécutée.
+
+## Configurer l’envoi des codes e-mail dans XAMPP
+
+L’application utilise `mail()` et le Sendmail fourni avec XAMPP. Les identifiants doivent rester uniquement dans la configuration locale, jamais dans les fichiers du projet.
+
+1. Dans `C:\xampp\sendmail\sendmail.ini`, renseigne les paramètres fournis par ton service SMTP, notamment `smtp_server`, `smtp_port`, `smtp_ssl`, `auth_username`, `auth_password` et `force_sender`. Utilise un mot de passe d’application si ton fournisseur le demande.
+2. Dans `C:\xampp\php\php.ini`, configure l’expéditeur et le chemin Sendmail dans `[mail function]` :
+
+   ```ini
+   sendmail_from = ton-adresse@example.com
+   sendmail_path = "\"C:\xampp\sendmail\sendmail.exe\" -t"
+   ```
+
+3. Redémarre Apache dans le panneau XAMPP. Pour vérifier le parcours sans envoyer d’e-mail, l’application affiche toujours la même confirmation; l’envoi réel dépend de cette configuration SMTP.
 
 ## Préparer le premier compte admin de test
 
@@ -37,6 +51,8 @@ Si la base et la table `users` existent déjà, importe `SQL/messaging_migration
 | Ouvrir une conversation avec un autre compte | Son historique s’affiche; les messages sont marqués comme lus. |
 | Ouvrir [l’adresse du Back Office](http://localhost/projetweb/index.php?action=admin) avec le compte normal | Le serveur répond « Accès refusé ». |
 | Se connecter avec le compte admin puis ouvrir **Utilisateurs** | La liste affiche les comptes enregistrés en base. |
+| Sur **Utilisateurs**, consulter les compteurs puis bloquer/débloquer un compte normal | Les totaux et statuts sont mis à jour; un compte bloqué ne peut plus se connecter et une session active est refusée à sa requête privée suivante. |
+| Ouvrir [Mot de passe oublié](http://localhost/projetweb/index.php?action=password-forgot) | Le parcours conduit directement à **Saisir le code**, puis au formulaire de nouveau mot de passe après validation. |
 | Ajouter un compte de test, le modifier et le supprimer | La liste reflète chaque opération. |
 | Saisir un e-mail invalide ou déjà utilisé | Le formulaire affiche une erreur. |
 | Saisir un mot de passe de connexion incorrect | La connexion est refusée. |
@@ -48,6 +64,8 @@ Si la base et la table `users` existent déjà, importe `SQL/messaging_migration
 - `Controller/AuthController.php` gère l’inscription, la connexion, les rôles, la validation et le CRUD en base.
 - `Controller/DashboardController.php` fournit les exemples du tableau de bord.
 - `Controller/MessagingController.php` et `Models/MessagingModel.php` gèrent les conversations privées et les messages.
+- `Controller/PasswordResetController.php` et `Models/PasswordResetModel.php` gèrent les codes de réinitialisation à usage unique, leur expiration et leurs limites de demandes/tentatives.
+- `config/mailer.php` envoie les codes via la configuration locale XAMPP; aucun code ni secret SMTP n’est placé dans l’interface ou le dépôt.
 - Le profil utilisateur accepte un numéro facultatif et une photo JPEG, PNG ou WebP de 2 Mo maximum. Les photos sont servies par une route authentifiée et ne sont pas accessibles directement dans le dossier d’upload.
 - `Views/front` contient les pages publiques, l’espace utilisateur et la messagerie; `Views/assets` contient les images, feuilles de style et scripts. Les URL d’assets tiennent compte du sous-dossier `projetweb`.
 - `Views/admin` contient le Back Office et la gestion des comptes, avec un layout distinct.

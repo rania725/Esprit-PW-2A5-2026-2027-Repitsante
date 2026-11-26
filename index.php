@@ -5,9 +5,12 @@ require_once __DIR__ . '/config/http.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/Models/UserModel.php';
 require_once __DIR__ . '/Models/MessagingModel.php';
+require_once __DIR__ . '/Models/PasswordResetModel.php';
 require_once __DIR__ . '/Controller/AuthController.php';
 require_once __DIR__ . '/Controller/DashboardController.php';
 require_once __DIR__ . '/Controller/MessagingController.php';
+require_once __DIR__ . '/Controller/PasswordResetController.php';
+require_once __DIR__ . '/config/mailer.php';
 
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
@@ -23,6 +26,9 @@ $routes = [
     'home' => ['GET'],
     'register' => ['GET', 'POST'],
     'login' => ['GET', 'POST'],
+    'password-forgot' => ['GET', 'POST'],
+    'password-code' => ['GET', 'POST'],
+    'password-new' => ['GET', 'POST'],
     'dashboard' => ['GET', 'POST'],
     'profile-photo' => ['GET'],
     'messages' => ['GET'],
@@ -32,6 +38,8 @@ $routes = [
     'logout' => ['POST'],
     'admin' => ['GET'],
     'users' => ['GET'],
+    'user-block' => ['POST'],
+    'user-unblock' => ['POST'],
     'user-create' => ['GET', 'POST'],
     'user-edit' => ['GET', 'POST'],
     'user-delete' => ['GET', 'POST'],
@@ -57,6 +65,15 @@ try {
             break;
         case 'login':
             $controller->login($method);
+            break;
+        case 'password-forgot':
+            (new PasswordResetController())->requestCode($method);
+            break;
+        case 'password-code':
+            (new PasswordResetController())->verifyCode($method);
+            break;
+        case 'password-new':
+            (new PasswordResetController())->setNewPassword($method);
             break;
         case 'dashboard':
             $controller->dashboard($method);
@@ -85,6 +102,12 @@ try {
             break;
         case 'users':
             $controller->users();
+            break;
+        case 'user-block':
+            $controller->setUserBlocked(true);
+            break;
+        case 'user-unblock':
+            $controller->setUserBlocked(false);
             break;
         case 'user-create':
         case 'user-edit':

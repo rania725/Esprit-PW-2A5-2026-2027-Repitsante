@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 final class AuthController
 {
-    private const USER_FIELDS = 'id, username, email, role, created_at, phone, profile_photo';
+    private const USER_FIELDS = 'id, username, email, role, created_at, phone, profile_photo, is_blocked';
     private const PROFILE_PHOTO_MAX_BYTES = 2097152;
     private const PROFILE_PHOTO_MAX_PIXELS = 25000000;
 
@@ -55,20 +55,25 @@ final class AuthController
             }
 
             if ($errors === []) {
-                $statement = Database::getConnection()->prepare('SELECT id, role, password FROM users WHERE email = ?');
+                $statement = Database::getConnection()->prepare('SELECT id, role, password, is_blocked FROM users WHERE email = ?');
                 $statement->execute([$email]);
                 $row = $statement->fetch();
 
                 if ($row && password_verify($password, $row['password'])) {
-                    session_regenerate_id(true);
-                    $_SESSION = [
-                        'user_id' => (int) $row['id'],
-                        'role' => $row['role'],
-                        'last_activity' => time(),
-                    ];
-                    redirect($row['role'] === 'admin' ? 'admin' : 'dashboard');
+                    if ((bool) $row['is_blocked']) {
+                        $errors['general'] = 'Ce compte est bloqué. Contacte un administrateur.';
+                    } else {
+                        session_regenerate_id(true);
+                        $_SESSION = [
+                            'user_id' => (int) $row['id'],
+                            'role' => $row['role'],
+                            'last_activity' => time(),
+                        ];
+                        redirect($row['role'] === 'admin' ? 'admin' : 'dashboard');
+                    }
+                } else {
+                    $errors['general'] = 'Adresse e-mail ou mot de passe incorrect.';
                 }
-                $errors['general'] = 'Adresse e-mail ou mot de passe incorrect.';
             }
             http_response_code(422);
         }
@@ -172,10 +177,24 @@ final class AuthController
         if (!isset($_SESSION['user_id'])) {
             return null;
         }
-        $user = $this->findUser($_SESSION['user_id']);
+        $id = filter_var($_SESSION['user_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($id === false) {
+            $_SESSION = [];
+            session_regenerate_id(true);
+            flash('Ta session est invalide. Reconnecte-toi.');
+            return null;
+        }
+        $user = $this->findUser((int) $id);
         if ($user === null) {
             $_SESSION = [];
             session_regenerate_id(true);
+            flash('Ta session est invalide. Reconnecte-toi.');
+            return null;
+        }
+        if ($user->isBlocked()) {
+            $_SESSION = [];
+            session_regenerate_id(true);
+            flash('Ce compte est bloqué. Contacte un administrateur.');
             return null;
         }
         $_SESSION['role'] = $user->getRole();
@@ -186,6 +205,9 @@ final class AuthController
     {
         $user = $this->currentUser();
         if ($user === null) {
+            if (!isset($_SESSION['flash'])) {
+                flash('Connecte-toi pour accéder à cette page.');
+            }
             redirect('login');
         }
         return $user;
@@ -240,9 +262,53 @@ final class AuthController
         $statement = Database::getConnection()->prepare($sql . ' ORDER BY id DESC');
         $statement->execute($parameters);
         $users = array_map([UserModel::class, 'fromArray'], $statement->fetchAll());
+        $statsStatement = Database::getConnection()->query(
+            'SELECT COUNT(*) AS total,
+                COALESCE(SUM(is_blocked = 0), 0) AS active,
+                COALESCE(SUM(is_blocked = 1), 0) AS blocked
+            FROM users'
+        );
+        $stats = $statsStatement->fetch();
         $section = 'users';
 
-        render('admin/users', 'Gestion des utilisateurs', compact('account', 'query', 'users', 'section'), 'admin');
+        render('admin/users', 'Gestion des utilisateurs', compact('account', 'query', 'users', 'stats', 'section'), 'admin');
+    }
+
+    public function setUserBlocked(bool $blocked): void
+    {
+        $account = $this->requireRole('admin');
+        $target = $this->requestedUser();
+        if ($target->getId() === $account->getId()) {
+            errorPage(403, 'Tu ne peux pas modifier le statut de ton propre compte.');
+        }
+        requireCsrf();
+
+        $updated = $this->asAdmin($account, $target, function () use ($target, $blocked): bool {
+            $database = Database::getConnection();
+            $statement = $database->prepare('SELECT role FROM users WHERE id = ? FOR UPDATE');
+            $statement->execute([$target->getId()]);
+            $role = $statement->fetchColumn();
+            if ($role === false) {
+                return false;
+            }
+            if ($blocked && $role === 'admin') {
+                $activeAdmins = (int) $database->query(
+                    "SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_blocked = 0"
+                )->fetchColumn();
+                if ($activeAdmins <= 1) {
+                    return false;
+                }
+            }
+            $statement = $database->prepare('UPDATE users SET is_blocked = ? WHERE id = ?');
+            $statement->execute([$blocked ? 1 : 0, $target->getId()]);
+            return true;
+        });
+        if (!$updated) {
+            errorPage(409, 'Cette action empêcherait tout administrateur de rester actif.');
+        }
+
+        flash($blocked ? 'Compte bloqué.' : 'Compte débloqué.');
+        redirect('users');
     }
 
     public function saveUser(string $method, bool $editing): void

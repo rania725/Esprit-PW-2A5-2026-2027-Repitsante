@@ -9,6 +9,7 @@
         <label for="password">Mot de passe</label>
         <input required id="password" name="password" type="password" autocomplete="current-password" maxlength="72"<?= isset($errors['password']) ? ' aria-invalid="true" aria-describedby="password-error"' : '' ?>>
         <?php if (isset($errors['password'])): ?><p class="field-error" id="password-error"><?= e($errors['password']) ?></p><?php endif; ?>
+        <a class="button button-outline password-forgot-button" href="<?= e(url('password-forgot')) ?>">Mot de passe oublié ?</a>
         <button class="button" type="submit">Se connecter</button>
     </form>
     <p class="form-footer">Pas encore de compte ? <a href="<?= e(url('register')) ?>">Inscris-toi</a>.</p>

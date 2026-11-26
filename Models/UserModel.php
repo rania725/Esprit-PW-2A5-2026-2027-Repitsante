@@ -10,6 +10,7 @@ final class UserModel
     private string $createdAt;
     private ?string $phone;
     private ?string $profilePhoto;
+    private bool $blocked;
 
     public static function fromArray(array $row): self
     {
@@ -23,6 +24,7 @@ final class UserModel
         $user->profilePhoto = isset($row['profile_photo']) && $row['profile_photo'] !== ''
             ? $row['profile_photo']
             : null;
+        $user->blocked = (bool) ($row['is_blocked'] ?? false);
         return $user;
     }
 
@@ -59,5 +61,10 @@ final class UserModel
     public function getProfilePhoto(): ?string
     {
         return $this->profilePhoto;
+    }
+
+    public function isBlocked(): bool
+    {
+        return $this->blocked;
     }
 }

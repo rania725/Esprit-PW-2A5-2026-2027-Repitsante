@@ -10,7 +10,32 @@ CREATE TABLE IF NOT EXISTS users (
     role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
     phone VARCHAR(30) NULL,
     profile_photo VARCHAR(64) NULL,
+    is_blocked TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS password_reset_requests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL UNIQUE,
+    user_id INT UNSIGNED NULL,
+    code_hash VARCHAR(255) NULL,
+    attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    request_count SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    request_window_started_at DATETIME NULL,
+    last_requested_at DATETIME NULL,
+    expires_at DATETIME NULL,
+    used_at DATETIME NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_password_reset_user (user_id),
+    CONSTRAINT fk_password_reset_user
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS password_reset_ip_limits (
+    ip_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    window_started_at DATETIME NOT NULL,
+    request_count SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS conversations (

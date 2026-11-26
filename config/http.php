@@ -109,6 +109,7 @@ function errorPage(int $status, string $description): void
         403 => 'Accès refusé',
         404 => 'Page introuvable',
         405 => 'Action non autorisée',
+        409 => 'Action impossible',
         503 => 'Service indisponible',
     ];
     render('front/error', $titles[$status] ?? 'Une erreur est survenue', ['description' => $description]);
