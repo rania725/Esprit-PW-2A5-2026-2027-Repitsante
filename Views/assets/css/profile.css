@@ -1,0 +1,43 @@
+.profile-card { width: min(100%, 680px); }
+.profile-photo-editor { display: grid; justify-items: center; gap: 8px; margin: 22px 0; text-align: center; }
+.profile-photo-editor > p { font-weight: 700; }
+.profile-photo-editor > p span,
+.profile-edit-form > label span { color: #526078; font-weight: 400; }
+.profile-photo,
+.profile-photo-placeholder {
+    display: grid;
+    width: 112px;
+    height: 112px;
+    place-items: center;
+    border: 3px solid #d3f3f3;
+    border-radius: 50%;
+    background: #e6fafa;
+    color: #0c1744;
+    font-size: 1.8rem;
+    font-weight: 750;
+    object-fit: cover;
+}
+.profile-edit-form { display: grid; gap: 9px; }
+.profile-edit-form > label { margin-top: 5px; font-weight: 700; }
+.profile-edit-form > input[type="file"],
+.profile-edit-form > input[type="tel"] {
+    width: 100%;
+    min-height: 43px;
+    padding: 9px 12px;
+    border: 1px solid #d8cbd8;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--navy);
+}
+.profile-edit-form > input[type="file"] { padding: 6px; }
+.profile-edit-form .hint { margin-top: -5px; }
+.profile-remove-photo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #9d1c3f;
+    font-weight: 600 !important;
+}
+.profile-remove-photo input { width: 17px; height: 17px; accent-color: var(--pink); }
+.profile-edit-form > .button { justify-self: start; margin-top: 10px; }
+.profile-data { margin-top: 22px; }

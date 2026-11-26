@@ -1,0 +1,5 @@
+USE repit_sante;
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS phone VARCHAR(30) NULL,
+    ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(64) NULL;
