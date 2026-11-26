@@ -1,4 +1,8 @@
-# Répit Santé
+# Esprit-PW-2A5-2026-2027-Repitsante
+
+Developed at Esprit School of Engineering – Tunisia | Academic Year 2026–2027 | Healthcare web application using HTML, CSS, JavaScript and PHP.
+
+## Répit Santé
 
 Répit Santé est un projet étudiant qui vise à coordonner les examens et les consultations afin de réduire les déplacements des patients vers Tunis. Le projet comprend le module **Utilisateurs & Accès**, une messagerie privée et les templates Front Office et Back Office. Les rendez-vous, parcours et alertes du tableau de bord restent des exemples fictifs de la maquette.
 
